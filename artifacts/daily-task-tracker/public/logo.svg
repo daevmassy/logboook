@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 48" fill="none">
+  <rect x="2" y="7" width="34" height="34" rx="10" fill="#326C65"/>
+  <path d="M12 17.5h14v17H12z" stroke="#F4F1E7" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M16 14h6M16 23h6M16 28h6" stroke="#F4F1E7" stroke-width="2" stroke-linecap="round"/>
+  <text x="47" y="32" fill="#253538" font-family="Manrope, sans-serif" font-size="26" font-weight="800" letter-spacing="-1.6">daybook</text>
+  <circle cx="150" cy="28" r="2.7" fill="#CF8650"/>
+</svg>

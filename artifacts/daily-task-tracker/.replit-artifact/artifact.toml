@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Daily Task Tracker"
+description = "A team task reporting app where employees log daily work and supervisors review individual activity, leave comments, and monitor weekly performance."
+version = "1.0.0"
+id = "artifacts/daily-task-tracker"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23646
+
+[services.development]
+run = "pnpm --filter @workspace/daily-task-tracker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/daily-task-tracker", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/daily-task-tracker/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23646"
+BASE_PATH = "/"

@@ -1,0 +1,3 @@
+- [Supervisor bootstrap](supervisor-bootstrap.md) — the first profile becomes supervisor; later users cannot choose privileged access.
+- [Date-only API query validation](date-query-validation.md) — generated `format: date` query schemas expect `Date` objects, so normalize HTTP strings at the server boundary.
+- [Clerk router handoffs](clerk-router-handoffs.md) — navigate cross-origin Clerk URLs with the browser; never send them through Wouter history.

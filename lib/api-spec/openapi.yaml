@@ -1,0 +1,524 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Daily Task Tracker API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: tracker
+    description: Profiles, work logs, team review, and weekly performance reports
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /me:
+    get:
+      operationId: getMyProfile
+      tags: [tracker]
+      summary: Get the current member profile
+      responses:
+        "200":
+          description: Current member profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: saveMyProfile
+      tags: [tracker]
+      summary: Create or update the current member profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          description: Saved member profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tracker]
+      summary: List visible task logs
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/TaskStatus"
+        - name: memberId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createTask
+      tags: [tracker]
+      summary: Create a task log for the current member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created task log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /tasks/{id}:
+    patch:
+      operationId: updateTask
+      tags: [tracker]
+      summary: Update a task log
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated task log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteTask
+      tags: [tracker]
+      summary: Delete one of the current member's task logs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted task log
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /tasks/{id}/comments:
+    post:
+      operationId: addTaskComment
+      tags: [tracker]
+      summary: Add a supervisor comment to a task log
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: Saved supervisor comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskComment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /members:
+    get:
+      operationId: listMembers
+      tags: [tracker]
+      summary: List team members for supervisors
+      responses:
+        "200":
+          description: Team members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /members/{id}/role:
+    patch:
+      operationId: updateMemberRole
+      tags: [tracker]
+      summary: Grant or remove supervisor access
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleInput"
+      responses:
+        "200":
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /reports/weekly:
+    get:
+      operationId: getWeeklyReport
+      tags: [tracker]
+      summary: Get the signed-in user's weekly report, or a team report for supervisors
+      parameters:
+        - name: weekStart
+          in: query
+          required: true
+          description: Monday date in YYYY-MM-DD format
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Personal weekly totals for employees; team-wide totals and per-member performance for supervisors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyReport"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Sign in is required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: The current member does not have access to this action
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Role:
+      type: string
+      enum: [employee, supervisor]
+    TaskStatus:
+      type: string
+      enum: [pending, done]
+    Member:
+      type: object
+      required: [id, email, username, firstName, lastName, role, createdAt]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        createdAt:
+          type: string
+          format: date-time
+    ProfileInput:
+      type: object
+      required: [email, username, firstName, lastName]
+      properties:
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          minLength: 2
+          maxLength: 40
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 80
+    RoleInput:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: "#/components/schemas/Role"
+    Task:
+      type: object
+      required:
+        [id, memberId, memberName, date, time, activity, department, actionTaken, status, remarks, createdAt, comments]
+      properties:
+        id:
+          type: integer
+        memberId:
+          type: string
+        memberName:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+        activity:
+          type: string
+          description: Problem addressed or worked on
+        department:
+          type: string
+        actionTaken:
+          type: string
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        remarks:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskComment"
+    TaskInput:
+      type: object
+      required: [date, time, activity, department, actionTaken, status, remarks]
+      properties:
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        activity:
+          type: string
+          description: Problem addressed or worked on
+          minLength: 1
+          maxLength: 300
+        department:
+          type: string
+          minLength: 1
+          maxLength: 120
+        actionTaken:
+          type: string
+          maxLength: 2000
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        remarks:
+          type: string
+          maxLength: 2000
+    TaskUpdate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        activity:
+          type: string
+          description: Problem addressed or worked on
+          minLength: 1
+          maxLength: 300
+        department:
+          type: string
+          minLength: 1
+          maxLength: 120
+        actionTaken:
+          type: string
+          maxLength: 2000
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        remarks:
+          type: string
+          maxLength: 2000
+    CommentInput:
+      type: object
+      required: [comment]
+      properties:
+        comment:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    TaskComment:
+      type: object
+      required: [id, taskId, supervisorId, supervisorName, comment, createdAt]
+      properties:
+        id:
+          type: integer
+        taskId:
+          type: integer
+        supervisorId:
+          type: string
+        supervisorName:
+          type: string
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    WeeklyMemberPerformance:
+      type: object
+      required: [memberId, memberName, role, totalTasks, completedTasks, pendingTasks, completionRate]
+      properties:
+        memberId:
+          type: string
+        memberName:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        totalTasks:
+          type: integer
+        completedTasks:
+          type: integer
+        pendingTasks:
+          type: integer
+        completionRate:
+          type: number
+    WeeklyReport:
+      type: object
+      required: [weekStart, weekEnd, totalTasks, completedTasks, pendingTasks, completionRate, members]
+      properties:
+        weekStart:
+          type: string
+          format: date
+        weekEnd:
+          type: string
+          format: date
+        totalTasks:
+          type: integer
+        completedTasks:
+          type: integer
+        pendingTasks:
+          type: integer
+        completionRate:
+          type: number
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeeklyMemberPerformance"
