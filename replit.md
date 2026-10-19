@@ -5,12 +5,14 @@ Daybook lets employees record daily work and gives supervisors a shared view of 
 ## Run & Operate
 
 - `pnpm run build` then `pnpm start` — build and run the web app and API together on `PORT`
+- `render.yaml` — Render Blueprint for the `logboook` web service and its existing `my-db` Postgres database. Clerk keys are entered in Render as secrets; never commit them.
+- The selected Free Render Postgres plan is for testing: it expires 30 days after creation and is deleted after a further 14-day grace period unless upgraded. See [Render's Free Postgres limits](https://render.com/docs/free#free-postgres).
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string; `VITE_CLERK_PUBLISHABLE_KEY` — frontend Clerk key; `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` — API Clerk credentials. Without the frontend key, the web app displays a setup message instead of generating an unusable `clerk.localhost` key.
+- Required env: `DATABASE_URL` — Postgres connection string; `VITE_CLERK_PUBLISHABLE_KEY` — frontend Clerk key; `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` — API Clerk credentials. Render resolves `DATABASE_URL` from the database in `render.yaml`; enter Clerk credentials in Render's secret prompts. Without the frontend key, the web app displays a setup message instead of generating an unusable `clerk.localhost` key.
 
 ## Stack
 
