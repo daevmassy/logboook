@@ -4,6 +4,7 @@ Daybook lets employees record daily work and gives supervisors a shared view of 
 
 ## Run & Operate
 
+- `pnpm run build` then `pnpm start` — build and run the web app and API together on `PORT`
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages

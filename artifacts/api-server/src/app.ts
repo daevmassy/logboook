@@ -1,4 +1,6 @@
 import express, { type Express } from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
@@ -12,6 +14,10 @@ import {
 } from "./middlewares/clerkProxyMiddleware";
 
 const app: Express = express();
+const webDist = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../daily-task-tracker/dist/public",
+);
 
 app.use(
   pinoHttp({
@@ -48,5 +54,16 @@ app.use(
 );
 
 app.use("/api", router);
+app.use(express.static(webDist));
+app.get("/{*path}", (req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    next();
+    return;
+  }
+
+  res.sendFile(path.join(webDist, "index.html"), (error) => {
+    if (error) next(error);
+  });
+});
 
 export default app;
