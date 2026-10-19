@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type FormEvent, type ReactNode } from 'react';
 import { ClerkProvider, Show, SignIn, SignUp, useClerk, useUser } from '@clerk/react';
-import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
@@ -20,7 +19,7 @@ import { buildWeeklyReportDocx } from './weekly-report-docx';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 20_000, retry: 1, refetchOnWindowFocus: false } } });
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim();
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 function stripBase(path: string) { return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || '/' : path; }
 const clerkAppearance = {
@@ -429,7 +428,21 @@ function NotFound() {
   return <main className="not-found"><Logo /><span className="eyebrow">PAGE NOT FOUND</span><h1>This page isn’t in the log.</h1><p>The address may have changed, or the page may not exist.</p><Link href="/" className="btn btn-primary" data-testid="link-not-found-home"><ArrowLeft size={15} /> Back to daybook</Link></main>;
 }
 function App() {
-  if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in .env file');
+  if (!clerkPubKey) {
+    return <main className="landing flex min-h-screen items-center justify-center p-6">
+      <section className="surface w-full max-w-xl p-8 text-center sm:p-10">
+        <Logo />
+        <p className="eyebrow mt-8">SETUP REQUIRED</p>
+        <h1 className="font-display mt-3 text-3xl font-semibold">Authentication isn’t configured</h1>
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+          Daybook needs a Clerk publishable key to load sign-in. Add <code>VITE_CLERK_PUBLISHABLE_KEY</code> to the web app environment and restart the dev server.
+        </p>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          The API also needs <code>CLERK_PUBLISHABLE_KEY</code> and <code>CLERK_SECRET_KEY</code>.
+        </p>
+      </section>
+    </main>;
+  }
   return <QueryClientProvider client={queryClient}><WouterRouter base={basePath}><ClerkRoutes /></WouterRouter></QueryClientProvider>;
 }
 export default App;

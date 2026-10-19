@@ -9,7 +9,7 @@ Daybook lets employees record daily work and gives supervisors a shared view of 
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` — Postgres connection string; `VITE_CLERK_PUBLISHABLE_KEY` — frontend Clerk key; `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` — API Clerk credentials. Without the frontend key, the web app displays a setup message instead of generating an unusable `clerk.localhost` key.
 
 ## Stack
 
