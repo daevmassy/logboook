@@ -59,7 +59,7 @@ router.patch("/members/:id/role", async (req, res): Promise<void> => {
 
   if (target.role === "supervisor" && parsed.data.role === "employee") {
     const [supervisorCount] = await db
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ count: sql<number>`count(*)` })
       .from(membersTable)
       .where(eq(membersTable.role, "supervisor"));
     if (supervisorCount.count <= 1) {
@@ -68,11 +68,15 @@ router.patch("/members/:id/role", async (req, res): Promise<void> => {
     }
   }
 
-  const [updated] = await db
+  await db
     .update(membersTable)
     .set({ role: parsed.data.role })
+    .where(eq(membersTable.id, target.id));
+  const [updated] = await db
+    .select()
+    .from(membersTable)
     .where(eq(membersTable.id, target.id))
-    .returning();
+    .limit(1);
   res.json(UpdateMemberRoleResponse.parse(updated));
 });
 

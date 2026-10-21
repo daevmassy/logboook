@@ -5,20 +5,20 @@ Daybook lets employees record daily work and gives supervisors a shared view of 
 ## Run & Operate
 
 - `pnpm run build` then `pnpm start` — build and run the web app and API together on `PORT`
-- `render.yaml` — Render Blueprint for the `logboook` web service and its existing `my-db` Postgres database. Clerk keys are entered in Render as secrets; never commit them.
-- The selected Free Render Postgres plan is for testing: it expires 30 days after creation and is deleted after a further 14-day grace period unless upgraded. See [Render's Free Postgres limits](https://render.com/docs/free#free-postgres).
+- `render.yaml` — Render Blueprint for the `logboook` web service. Set `DATABASE_URL` to a reachable MySQL/MariaDB connection string and enter Clerk keys as secrets; never commit them.
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string; `VITE_CLERK_PUBLISHABLE_KEY` — frontend Clerk key; `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` — API Clerk credentials. Render resolves `DATABASE_URL` from the database in `render.yaml`; enter Clerk credentials in Render's secret prompts. Without the frontend key, the web app displays a setup message instead of generating an unusable `clerk.localhost` key.
+- For XAMPP, start MySQL and create the database in phpMyAdmin using `CREATE DATABASE logbook CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`. Set `DATABASE_URL=mysql://root@127.0.0.1:3306/logbook` in `artifacts/api-server/.env.local` (add the XAMPP MySQL password after `root:` if one is configured), then run `pnpm --filter @workspace/db run push` to create/update tables.
+- Required env: `DATABASE_URL` — MySQL/MariaDB connection string; `VITE_CLERK_PUBLISHABLE_KEY` — frontend Clerk key; `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` — API Clerk credentials. Render needs a publicly reachable MySQL/MariaDB host; a local XAMPP server is not reachable by Render by default. Without the frontend key, the web app displays a setup message instead of generating an unusable `clerk.localhost` key.
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - API: Express 5
-- DB: PostgreSQL + Drizzle ORM
+- DB: MySQL/MariaDB + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
@@ -28,7 +28,7 @@ Daybook lets employees record daily work and gives supervisors a shared view of 
 - `artifacts/daily-task-tracker` — employee, supervisor, and public web experience
 - `artifacts/api-server/src/routes/tracker` — authenticated profile, task, team, and report APIs
 - `lib/api-spec/openapi.yaml` — API contract source of truth; regenerate clients with the codegen command above
-- `lib/db/src/schema/tracker.ts` — PostgreSQL schema for team members, task logs, and supervisor comments
+- `lib/db/src/schema/tracker.ts` — MySQL schema for team members, task logs, and supervisor comments
 
 ## Architecture decisions
 
@@ -38,7 +38,7 @@ Daybook lets employees record daily work and gives supervisors a shared view of 
 
 ## Product
 
-- The root route is the employee sign-up/login screen; double-tapping the Daybook logo opens supervisor sign-in, with role checks still enforced.
+- Employee sign-in is at `/sign-in`; double-tapping the Daybook logo on that page opens the separate `/admin/sign-in` supervisor portal. Both use Clerk accounts, and supervisor authorization is still enforced by the member role and API checks.
 - Employees sign in, complete a profile, and create, edit, filter, and delete their daily task logs.
 - Supervisors can review all team task logs, leave comments, manage supervisor access, and compare weekly completion across members.
 - Task logs include date, time, activity, department, issue/request context, action taken, pending/done status, and remarks.

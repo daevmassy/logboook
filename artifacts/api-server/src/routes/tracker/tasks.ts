@@ -76,9 +76,11 @@ router.post("/tasks", async (req, res): Promise<void> => {
       memberId: userId,
       ...parsed.data,
       date: parsed.data.date.toISOString().slice(0, 10),
-    })
-    .returning();
-  const [task] = await tasksWithDetails([eq(tasksTable.id, created.id)]);
+      issue: "",
+    });
+  const [task] = await tasksWithDetails([
+    eq(tasksTable.id, Number(created.insertId)),
+  ]);
   res.status(201).json(CreateTaskResponse.parse(task));
 });
 
@@ -114,15 +116,20 @@ router.patch("/tasks/:id", async (req, res): Promise<void> => {
   }
 
   const { date, ...changes } = parsed.data;
-  const [updated] = await db
+  await db
     .update(tasksTable)
     .set({
       ...changes,
       ...(date ? { date: date.toISOString().slice(0, 10) } : {}),
     })
-    .where(eq(tasksTable.id, params.data.id))
-    .returning();
-  const [task] = await tasksWithDetails([eq(tasksTable.id, updated.id)]);
+    .where(eq(tasksTable.id, params.data.id));
+  const [task] = await tasksWithDetails([
+    eq(tasksTable.id, params.data.id),
+  ]);
+  if (!task) {
+    res.status(404).json({ error: "Task not found." });
+    return;
+  }
   res.json(UpdateTaskResponse.parse(task));
 });
 
@@ -140,9 +147,8 @@ router.delete("/tasks/:id", async (req, res): Promise<void> => {
 
   const [deleted] = await db
     .delete(tasksTable)
-    .where(and(eq(tasksTable.id, params.data.id), eq(tasksTable.memberId, userId)))
-    .returning({ id: tasksTable.id });
-  if (!deleted) {
+    .where(and(eq(tasksTable.id, params.data.id), eq(tasksTable.memberId, userId)));
+  if (deleted.affectedRows === 0) {
     const [exists] = await db
       .select({ id: tasksTable.id })
       .from(tasksTable)
@@ -183,14 +189,18 @@ router.post("/tasks/:id/comments", async (req, res): Promise<void> => {
     return;
   }
 
-  const [comment] = await db
+  const [created] = await db
     .insert(taskCommentsTable)
     .values({
       taskId: params.data.id,
       supervisorId: userId,
       comment: parsed.data.comment,
-    })
-    .returning();
+    });
+  const [comment] = await db
+    .select()
+    .from(taskCommentsTable)
+    .where(eq(taskCommentsTable.id, Number(created.insertId)))
+    .limit(1);
   res.status(201).json(
     AddTaskCommentResponse.parse({
       ...comment,

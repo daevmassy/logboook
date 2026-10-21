@@ -129,9 +129,10 @@ function AdminLogoButton({ inverse = false }: { inverse?: boolean }) {
 function AuthRoute({ mode, adminLogin = false }: { mode: 'in' | 'up'; adminLogin?: boolean }) {
   const signInPath = adminLogin ? `${basePath}/admin/sign-in` : `${basePath}/sign-in`;
   const signUpPath = `${basePath}/sign-up`;
-  return <main className="auth-page">
-    <div className="auth-aside"><AdminLogoButton inverse /><div className="auth-quote"><span>THE DAILY RECORD</span><h1>Make every<br />day’s work <em>count.</em></h1><p>A practical journal for focused teams and the people who help them do their best work.</p></div><div className="auth-aside-foot">DAYBOOK · WORK, WELL ACCOUNTED FOR</div></div>
+  return <main className={`auth-page ${adminLogin ? 'admin-auth-page' : ''}`}>
+    <div className="auth-aside"><AdminLogoButton inverse /><div className="auth-quote"><span>{adminLogin ? 'SUPERVISOR ACCESS' : 'THE DAILY RECORD'}</span><h1>{adminLogin ? <>Lead the team.<br />See work <em>clearly.</em></> : <>Make every<br />day’s work <em>count.</em></>}</h1><p>{adminLogin ? 'Sign in with your approved supervisor account to review team work and weekly progress.' : 'A practical journal for focused teams and the people who help them do their best work.'}</p></div><div className="auth-aside-foot">DAYBOOK · WORK, WELL ACCOUNTED FOR</div></div>
     <div className="auth-form-side"><div className="auth-mobile-brand"><AdminLogoButton /></div>
+      {adminLogin && <section className="admin-auth-intro" aria-labelledby="admin-auth-title"><span className="admin-auth-label"><ShieldCheck size={14} /> SUPERVISOR PORTAL</span><h2 id="admin-auth-title">Supervisor sign in</h2><p>Use your approved Daybook account. Supervisor access is verified after sign in.</p><Link href="/sign-in" className="admin-auth-back"><ArrowLeft size={13} /> Employee sign in</Link></section>}
       {mode === 'in'
         ? <SignIn routing="path" path={signInPath} signUpUrl={signUpPath} {...(adminLogin ? { forceRedirectUrl: `${basePath}/admin` } : {})} />
         : <SignUp routing="path" path={signUpPath} signInUrl={signInPath} />}

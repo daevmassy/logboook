@@ -1,48 +1,59 @@
 import { createInsertSchema } from "drizzle-zod";
-import { date, integer, pgTable, serial, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import {
+  date,
+  int,
+  mysqlTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/mysql-core";
 import { z } from "zod/v4";
 
-export const membersTable = pgTable(
+export const membersTable = mysqlTable(
   "members",
   {
-    id: text("id").primaryKey(),
+    id: varchar("id", { length: 191 }).primaryKey(),
     email: text("email").notNull(),
     username: varchar("username", { length: 40 }).notNull(),
     firstName: varchar("first_name", { length: 80 }).notNull(),
     lastName: varchar("last_name", { length: 80 }).notNull(),
-    role: text("role").notNull().default("employee"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    role: varchar("role", { length: 40 }).notNull().default("employee"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("members_username_lower_unique").on(sql`lower(${table.username})`)],
+  (table) => [uniqueIndex("members_username_unique").on(table.username)],
 );
 
-export const tasksTable = pgTable("task_logs", {
-  id: serial("id").primaryKey(),
-  memberId: text("member_id")
+export const tasksTable = mysqlTable("task_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  memberId: varchar("member_id", { length: 191 })
     .notNull()
     .references(() => membersTable.id, { onDelete: "cascade" }),
   date: date("date", { mode: "string" }).notNull(),
   time: varchar("time", { length: 5 }).notNull(),
   activity: varchar("activity", { length: 300 }).notNull(),
   department: varchar("department", { length: 120 }).notNull(),
-  issue: text("issue").notNull().default(""),
-  actionTaken: text("action_taken").notNull().default(""),
-  status: text("status").notNull().default("pending"),
-  remarks: text("remarks").notNull().default(""),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  issue: text("issue").notNull(),
+  actionTaken: text("action_taken").notNull(),
+  status: varchar("status", { length: 40 }).notNull().default("pending"),
+  remarks: text("remarks").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
-export const taskCommentsTable = pgTable("task_comments", {
-  id: serial("id").primaryKey(),
-  taskId: integer("task_id")
+export const taskCommentsTable = mysqlTable("task_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("task_id")
     .notNull()
     .references(() => tasksTable.id, { onDelete: "cascade" }),
-  supervisorId: text("supervisor_id")
+  supervisorId: varchar("supervisor_id", { length: 191 })
     .notNull()
     .references(() => membersTable.id, { onDelete: "cascade" }),
   comment: text("comment").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const profileSetupLocksTable = mysqlTable("profile_setup_locks", {
+  id: varchar("id", { length: 40 }).primaryKey(),
 });
 
 export const insertMemberSchema = createInsertSchema(membersTable).omit({ createdAt: true });

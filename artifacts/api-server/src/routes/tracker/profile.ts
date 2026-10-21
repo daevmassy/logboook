@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { and, eq, sql } from "drizzle-orm";
-import { db, membersTable } from "@workspace/db";
+import { db, membersTable, profileSetupLocksTable } from "@workspace/db";
 import {
   GetMyProfileResponse,
   SaveMyProfileBody,
@@ -56,7 +56,15 @@ router.put("/me", requireAuth, async (req, res): Promise<void> => {
   }
 
   const member = await db.transaction(async (tx) => {
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(91827461)`);
+    await tx
+      .insert(profileSetupLocksTable)
+      .values({ id: "first-member" })
+      .onDuplicateKeyUpdate({ set: { id: "first-member" } });
+    await tx
+      .select()
+      .from(profileSetupLocksTable)
+      .where(eq(profileSetupLocksTable.id, "first-member"))
+      .for("update");
     const [existing] = await tx
       .select()
       .from(membersTable)
@@ -64,22 +72,30 @@ router.put("/me", requireAuth, async (req, res): Promise<void> => {
       .limit(1);
 
     if (existing) {
-      const [updated] = await tx
+      await tx
         .update(membersTable)
         .set({ email, username, firstName, lastName })
+        .where(eq(membersTable.id, userId));
+      const [updated] = await tx
+        .select()
+        .from(membersTable)
         .where(eq(membersTable.id, userId))
-        .returning();
+        .limit(1);
       return updated;
     }
 
     const [countRow] = await tx
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ count: sql<number>`count(*)` })
       .from(membersTable);
     const role = countRow.count === 0 ? "supervisor" : "employee";
-    const [created] = await tx
+    await tx
       .insert(membersTable)
-      .values({ id: userId, email, username, firstName, lastName, role })
-      .returning();
+      .values({ id: userId, email, username, firstName, lastName, role });
+    const [created] = await tx
+      .select()
+      .from(membersTable)
+      .where(eq(membersTable.id, userId))
+      .limit(1);
     return created;
   });
 
